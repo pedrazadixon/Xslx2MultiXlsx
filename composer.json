@@ -1,4 +1,8 @@
 {
+    "config": {
+        "vendor-dir": "bin/vendor/"
+    },
+
     "require": {
         "phpoffice/phpspreadsheet": "^1.11"
     }

@@ -1,6 +1,6 @@
 <?php
 
-require 'vendor/autoload.php';
+require 'bin/vendor/autoload.php';
 
 class Xslx2MultiXlsx
 {
