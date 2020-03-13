@@ -1,5 +1,8 @@
 <?php
 
+if(php_sapi_name() != "cli")
+    exit("this app is for CLI use");
+
 require_once 'Xslx2MultiXlsx.php';
 
 $input_folder = "input";
