@@ -1,0 +1,13 @@
+# composer
+composer.phar
+vendor/
+
+# project
+output/
+
+input/*
+!input/test.xlsx
+!input/test.json
+
+templates/*
+!templates/test.xlsx
