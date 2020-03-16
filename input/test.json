@@ -1,6 +1,9 @@
 {
-    "email": "E4",
-	"full_name": ["E3","E7"],
-	"gender": "E5",
-	"ip_address": "E6"
+	"name": "file-{row} {E11}",
+	"positions": {
+		"email": "E4",
+		"full_name": ["E3","E7"],
+		"gender": "E5",
+		"ip_address": "E6"
+	}
 }

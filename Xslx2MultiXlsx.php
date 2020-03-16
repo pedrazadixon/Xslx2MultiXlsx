@@ -29,6 +29,48 @@ class Xslx2MultiXlsx
         return $template_spreadsheet;
     }
 
+    function getNameTemplate()
+    {
+        $traslator = $this->getTraslator();
+        $name_template = $traslator["name"];
+
+        preg_match_all('/\{(.*?)\}/', $name_template, $matches);
+
+        foreach ($matches[1] as $key => $value) {
+            if ($value === "row") continue;
+
+            $exists = false;
+
+            foreach ($traslator["positions"] as $col_title => $position) {
+                if (is_array($position)) {
+                    foreach ($position as $pos) {
+                        if ($value == $pos) $exists = true;
+                    }
+                    continue;
+                }
+                if ($value == $position) $exists = true;
+            }
+            if ($exists == false) exit("positions for templated name not exist in traslator positions");
+        }
+
+        return [
+            "name_template" => $name_template,
+            "matches" => $matches,
+        ];
+    }
+
+    function makeFilename($filename, $position, $name_template, $row_data)
+    {
+        $found_key = array_search($position, $name_template["matches"][1]);
+        if ($found_key !== false) {
+            $filename = str_replace(
+                $name_template["matches"][0][$found_key],
+                $row_data,
+                $filename
+            );
+        }
+        return $filename;
+    }
 
     function writeOutputFiles()
     {
@@ -36,27 +78,41 @@ class Xslx2MultiXlsx
         $sheet = $spreadsheet->getActiveSheet();
         $input_data = $this->getInputData();
         $positions = $this->getPositions();
+        $name_template = $this->getNameTemplate();
 
-        ##### comprobar titulos flag
+        ##### comprobar / eliminar titulos flag
         unset($input_data[0]);
 
+
         foreach ($input_data as $row_n => $row) {
+
+            $filename = $name_template["name_template"];
 
             foreach ($positions as $col_title => $data) {
 
                 if (is_array($data["target_cells"])) {
                     foreach ($data["target_cells"] as $pos) {
                         $sheet->setCellValue($pos, $row[$data["input_data_col_index"]]);
+                        $filename = $this->makeFilename($filename, $pos, $name_template, $row[$data["input_data_col_index"]]);
                     }
                     continue;
                 }
 
                 $sheet->setCellValue($data["target_cells"], $row[$data["input_data_col_index"]]);
+                $filename = $this->makeFilename($filename, $data["target_cells"], $name_template, $row[$data["input_data_col_index"]]);
             }
 
+            // non-compatible windows characteres for names
+            $filename = str_replace(["\\", "/", ":", "*", "?", "\"", "<", ">", "|"], " ", $filename);
+
+            $filename = str_replace("{row}", $row_n, $filename);
+
+            $full_filename = 'output/' . $filename . '.xlsx';
+
             $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
-            $writer->save('output/file_' . $row_n . '.xlsx');
-            print_r('Created file: output/file_' . $row_n . '.xlsx' . PHP_EOL);
+            $writer->save($full_filename);
+
+            print_r('Created file:' . $full_filename . PHP_EOL);
         }
     }
 
@@ -64,8 +120,10 @@ class Xslx2MultiXlsx
     {
         $file_titles = $this->getTitles();
         $traslator = $this->getTraslator();
+        $positions = $traslator["positions"];
+
         $titles_positions = [];
-        foreach ($traslator as $traslator_title => $cells) {
+        foreach ($positions as $traslator_title => $cells) {
             $titles_positions[$traslator_title] = [
                 'input_data_col_index' => array_search($traslator_title, $file_titles),
                 'target_cells' => $cells,
